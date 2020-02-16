@@ -10,19 +10,21 @@ matchid = 1
 
 # Read the match Result file.
 match_file = list(csv.reader(open('./data/matches.csv')))[1:]
+action_file = list(csv.reader(open('./data/fullevents.csv')))[1:]
+csv_reader = list(csv.reader(open('./data/passingevents.csv')))[1:]
 
 while matchid <= 38:
     passing_list = None
     # Loading the matching data.
-    # Read the csv file.
-    csv_reader = csv.reader(open('./data/passingevents.csv'))
 
     if is_huskies:
         passing_list = [row for row in csv_reader if row[0]
                         == str(matchid) and row[1] == 'Huskies']
+        action_list = [row for row in action_file if row[0] == str(matchid)]
     else:
         passing_list = [row for row in csv_reader if row[0]
                         == str(matchid) and row[1] != 'Huskies']
+        action_list = [row for row in action_file if row[0] == str(matchid)]
     passing_cnt = len(passing_list)
 
     # Analyzing the data.
@@ -104,6 +106,46 @@ while matchid <= 38:
     L_val: list = np.linalg.eig(L_matrix)[0].real.tolist()
     L_val.sort()
     L2_ans = L_val[1]
+
+    # Analyze the offensive tactics.
+    for eventid in range(len(action_list)):
+        cur_event = action_list[eventid]
+        if cur_event[7] != 'Shot':
+            continue
+
+        # Shot, analyze the actions before and after it.
+        event_before = action_list[eventid -
+                                   21: eventid] if eventid >= 0 else action_list[:eventid]
+        event_after = action_list[eventid + 1]
+
+        # Caculate the time.
+        total_time = float(action_list[eventid][5]) - float(event_before[0][5])
+        ball_time = 0.0
+        num1 = 0
+        num2 = 0
+        num3 = 0
+        simplepass = 0
+        smartpass = 0
+        flag = 0
+
+        for i, event in enumerate(event_before):
+            if i+1 < len(event_before) and ((is_huskies and event[1] == 'Huskies') or (not is_huskies and event[1] != 'Huskies')):
+                ball_time += float(event_before[i + 1][5]) - float(event[5])
+                if event[7] == 'Ground attacking duel' and i+2 < len(event_before) and event_before[i + 2][6] == 'Pass':
+                    num1 += 1
+                elif event[7] == 'Ground attacking duel' and i+2 < len(event_before) and event_before[i + 2][6] == 'Duel':
+                    num2 += 1
+                elif event[7] == 'Simple pass':
+                    simplepass += 1
+                elif event[7] == 'Smart pass':
+                    smartpass += 1
+                elif event[6] == 'Foul' and i+1 < len(event_before) and event_before[i + 1][6] == 'Free Kick':
+                    num3 += 1
+                elif event[7] == 'Corner':
+                    flag = 1
+        time_rate = ball_time / total_time
+
+        num5 = 1 if event_after[6] == 'Save attempt' else 0
 
     # Print the ans.
     print(

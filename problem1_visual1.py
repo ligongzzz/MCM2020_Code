@@ -119,4 +119,4 @@ for i in range(player_cnt):
 cv2.imshow('Problem1', img)
 cv2.waitKey(0)
 
-cv2.imwrite('problem1_visual1.jpg', img)
+cv2.imwrite('problem1_visual1.png', img)
