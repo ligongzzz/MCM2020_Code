@@ -10,9 +10,14 @@ LINE_COLOR_UB = (150, 60, 100)
 POINT_COLOR_UB = (0, 255, 255)
 LINE_COLOR_LB = (255, 180, 160)
 POINT_COLOR_LB = (0, 0, 200)
+# Blue: F, Green: D, Purple: M, Yellow: G.
+PLAYER_COLOR = {'F': (0xff, 0x99, 0x66), 'D': (0x66, 0x99, 0x66),
+                'M': (0x66, 0x33, 0x33), 'G': (0, 0xff, 0xff)}
+
 LINE_WIDTH_LB = 1
 LINE_WIDTH_UB = 10
 POINT_RADIUS = 20
+PLAYER_BORDER = 3
 
 # Read the csv file.
 csv_reader = csv.reader(open('./data/passingevents.csv'))
@@ -20,6 +25,7 @@ csv_reader = csv.reader(open('./data/passingevents.csv'))
 # The first match.(First match and self passing only.)
 passing_list = [row for row in csv_reader if row[0]
                 == '1' and row[1] == 'Huskies' and row[4] == '1H']
+
 passing_cnt = len(passing_list)
 
 # Analyzing the data.
@@ -104,7 +110,9 @@ for i in range(player_cnt):
                   (max_player - min_player))
     radius = int((1 - (1 - player_passing_cnt[i] /
                        (max_player - min_player)) * 0.65) * POINT_RADIUS)
-
+    border_color = PLAYER_COLOR[player_list[i][-2]]
+    cv2.circle(img, pos_transforms(player_pos[i]), radius + PLAYER_BORDER,
+               border_color, -1, cv2.LINE_AA)
     cv2.circle(img, pos_transforms(player_pos[i]), radius,
                color_transforms(POINT_COLOR_LB, POINT_COLOR_UB, color_rate), -1, cv2.LINE_AA)
 
