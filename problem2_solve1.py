@@ -9,7 +9,7 @@ is_huskies: bool = True
 matchid = 1
 
 # Read the match Result file.
-match_file = list(csv.reader(open('./data/matches.csv')))[1:]
+match_file = list(csv.reader(open('./data/matches.csv')))
 action_file = list(csv.reader(open('./data/fullevents.csv')))[1:]
 csv_reader = list(csv.reader(open('./data/passingevents.csv')))[1:]
 
@@ -115,8 +115,10 @@ while matchid <= 38:
 
         # Shot, analyze the actions before and after it.
         event_before = action_list[eventid -
-                                   21: eventid] if eventid >= 0 else action_list[:eventid]
-        event_after = action_list[eventid + 1]
+                                   21: eventid] if eventid - 21 >= 0 else action_list[:eventid]
+
+        event_after = action_list[eventid +
+                                  1] if eventid + 1 < len(action_list) else None
 
         # Caculate the time.
         total_time = float(action_list[eventid][5]) - float(event_before[0][5])
@@ -145,12 +147,43 @@ while matchid <= 38:
                     flag = 1
         time_rate = ball_time / total_time
 
-        num5 = 1 if event_after[6] == 'Save attempt' else 0
+        num5 = 1 if event_after is not None and event_after[6] == 'Save attempt' else 0
+
+    # Analyze the defensive tactics.
+    ODC = 0
+    PPDA_cnt = 0
+    PPDA_action = 0
+    shot_cnt = 0
+    goal_cnt = 0
+    clear_cnt = 0
+    save_cnt = 0
+
+    for action in action_list:
+        if (is_huskies and action[1] != 'Huskies') or (not is_huskies and action[1] == 'Huskies'):
+            if action[6] == 'Pass' and float(action[8]) > 82.6 and action[3] != '':
+                ODC += 1
+            if action[6] == 'Pass' and float(action[8]) > 62 and action[3] != '':
+                PPDA_cnt += 1
+        else:
+            if action[6] == 'Duel' or action[6] == 'Save attempt' or action[6] == 'Foul':
+                PPDA_action += 1
+            elif action[7] == 'Clearance':
+                clear_cnt += 1
+            elif action[6] == 'Save attempt':
+                save_cnt += 1
+            elif action[6] == 'Shot':
+                shot_cnt += 1
+    if is_huskies:
+        goal_cnt = int(match_file[matchid][3])
+    else:
+        goal_cnt = int(match_file[matchid][4])
+    PPDA = PPDA_cnt / PPDA_action
+    defence_val = 1 / ODC + 1 / PPDA - goal_cnt / shot_cnt + clear_cnt - save_cnt
 
     # Print the ans.
     print(
         f'MatchID:{matchid} Huskies:{is_huskies} C:{C_ans} D:{D_ans} L1:{L1_ans} L2:{L2_ans} '
-        f'HuskiesResult:{match_file[matchid-1][2]}')
+        f'HuskiesResult:{match_file[matchid][2]}')
 
     # Continue.
     if is_huskies:
