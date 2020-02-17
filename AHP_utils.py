@@ -27,8 +27,7 @@ def AHP_Check(array):
 def normalize(input: np.ndarray):
     mean = input.mean()
     std = input.std()
-    ans = (input - mean) / std / 2 + 1.0
-    ans = ans * (ans > 0)
+    ans = (input - mean) / std
     return ans
 
 
@@ -51,9 +50,9 @@ OP = np.array([
 ])
 
 OA = np.array([
-    [1, 1, 1 / 2],
-    [1, 1, 1 / 2],
-    [2, 2, 1]
+    [1, 5, 3],
+    [1/5, 1, 1/2],
+    [1/3, 2, 1]
 ])
 
 DA = np.array([
