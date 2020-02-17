@@ -23,6 +23,7 @@ num2_cnt = []
 num3_cnt = []
 num5_cnt = []
 flag_cnt = []
+pass_way = []
 
 ODC_cnt = np.zeros(76)
 PPDA_cnt = np.zeros(76)
@@ -206,6 +207,29 @@ while matchid <= 38:
         num5_cnt.append(num5)
         flag_cnt.append(-flag)
 
+        # Make the pass way image.
+        cur_img = np.zeros((101, 101))
+
+        # Loop from the end until the ball if controlled by the other team or free kick.
+        last_point = (100, 50)
+        line_cnt = 0
+        for i in range(len(event_before)):
+            cur_event = event_before[-i - 1]
+            if cur_event[6] == 'Pass' or cur_event[6] == 'Free Kick' or cur_event[7] == 'Touch':
+                pt1 = int(float(cur_event[8])), int(float(cur_event[9]))
+                pt2 = int(float(cur_event[10])), int(float(cur_event[11]))
+                cv2.line(cur_img, pt1, pt2, 255, 1)
+                if last_point is not None:
+                    cv2.line(cur_img, pt2, last_point, 255, 1)
+                last_point = pt1
+                if cur_event[5] == 'Free Kick':
+                    break
+                line_cnt += 1
+                if line_cnt >= 3:
+                    break
+
+        pass_way.append(cur_img)
+
         shot_id += 1
 
     # Storage the shot_id to the offensive_cnt.
@@ -308,7 +332,10 @@ final_val = offensive_val * ALL_matrix[0] + defensive_val * ALL_matrix[1] + L2_c
     ALL_matrix[2] + (0.5 * C_cnt + 0.5 * L1_cnt) * \
     ALL_matrix[3] + D_cnt * ALL_matrix[4]
 
-with open('problem2_value.csv', 'wt') as f:
+with open('./data/problem2_value.csv', 'wt') as f:
     for i in range(38):
         f.write(
             f'{final_val[2 * i]},{final_val[2 * i + 1]},{offensive_val[2*i]},{offensive_val[2*i+1]},{defensive_val[2*i]},{defensive_val[2*i+1]},{L2_cnt[2*i]},{L2_cnt[2*i+1]},{(0.5 * C_cnt + 0.5 * L1_cnt)[2*i]},{(0.5 * C_cnt + 0.5 * L1_cnt)[2*i+1]},{D_cnt[2*i]},{D_cnt[2*i+1]},{match_file[i + 1][2]}\n')
+
+np.save('./data/problem2_shot_value.npy', single_offensive_val)
+np.save('./data/problem2_shot_image.npy', np.array(pass_way))
